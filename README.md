@@ -1,4 +1,4 @@
-# TMC2209 Stepper Driver Driver
+# TMC2209 Stepper Driver Driver for STM32 Microcontrollers
 
 ## Overview
 This module is a driver for the TMC2209 step motor driver IC for **STM32 microcontrollers**. It provides an interface for controlling step motors, includes UART based control and STEP/DIR based control (Legacy Mode). 
