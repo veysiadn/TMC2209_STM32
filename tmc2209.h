@@ -591,7 +591,7 @@ void set_stall_guard_threshold(tmc2209_stepper_driver_t *stepper_driver, uint8_t
  *  measured at each of the chopper outputs is half of the effective chopper frequency fPWM.
  *
  * @param stepper_driver
- * @param pwm_freq 0-3 for 3-58.82kHz, 2-46.51kHz, 1-35.15kHz, 0-23.44kHz respectively.
+ * @param pwm_freq PWM frequency selection: 0=23.44 kHz, 1=35.15 kHz, 2=46.51 kHz, 3=58.82 kHz.
  */
 void set_pwm_frequency(tmc2209_stepper_driver_t *stepper_driver, uint8_t pwm_freq);
 /**
@@ -653,7 +653,7 @@ void enable_analog_current_scaling(tmc2209_stepper_driver_t *stepper_driver);
 void disable_analog_current_scaling(tmc2209_stepper_driver_t *stepper_driver);
 
 /**
- * @brief Use external sense resistor for the stepper driver and notificy the driver about the usage. Since the driver also has an internal
+ * @brief Use external sense resistor for the stepper driver and notify the driver about the usage. Since the driver also has an internal
  * sense resistor, by default the driver is using internal sense resistor.
  * @note Use VREF voltage to calculate the current.
  *
@@ -661,7 +661,7 @@ void disable_analog_current_scaling(tmc2209_stepper_driver_t *stepper_driver);
  */
 void use_external_resistor(tmc2209_stepper_driver_t *stepper_driver);
 /**
- * @brief Use internal sense resistor for the stepper driver and notificy the driver about the usage.
+ * @brief Use internal sense resistor for the stepper driver and notify the driver about the usage.
  * Use current supplied into VREF as reference for internal sense resistor. VREF pin internally is driven to GND in this mode.
  *
  * @param stepper_driver
@@ -852,7 +852,7 @@ void read_and_store_registers(tmc2209_stepper_driver_t *stepper_driver);
 bool serial_operation_mode(tmc2209_stepper_driver_t *stepper_driver);
 
 /**
- * @brief Minimize the motor current to prevent overheating. This function sets the run and hold current values to the minumum, which is 0%.
+ * @brief Minimize the motor current to prevent overheating. This function sets the run and hold current values to the minimum, which is 0%.
  *
  * @param stepper_driver
  */

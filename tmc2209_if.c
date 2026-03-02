@@ -45,7 +45,7 @@
 // void tmc2209_set_hardware_enable_pin(tmc2209_stepper_driver_t *stepper_driver, uint8_t hardware_enable_pin)
 // {
 //   stepper_driver->hardware_enable_pin_ = hardware_enable_pin;
-
+//   /* Drive ENN HIGH on init — the pin is active-low, so this keeps the driver disabled */
 //   HAL_GPIO_WritePin(MOT_EN_GPIO_Port, MOT_EN_Pin, GPIO_PIN_SET);
 // }
 
@@ -127,6 +127,8 @@
 //   uint8_t  crc           = calculate_crc_write(stepper_driver, &read_reply_datagram, WRITE_READ_REPLY_DATAGRAM_SIZE);
 //   if (crc != read_reply_datagram.crc)
 //   {
+//     /* CRC mismatch — add your error handling here (e.g., return 0, set an error flag, or retry) */
+//     return 0;
 //   }
 //   return reversed_data;
 // }
