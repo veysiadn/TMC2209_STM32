@@ -1,6 +1,6 @@
 /**
 ******************************************************************************
-* @file           : tmc2209_c.h
+* @file           : tmc2209.h
 * @author         : Veysi Adin (veysi.adin@outlook.com)
 * @brief          : This file contains the functions prototypes for the
 * TMC2209 stepper driver. For detailed explanation of the functions please

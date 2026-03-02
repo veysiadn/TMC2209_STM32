@@ -37,8 +37,8 @@ long constrain(long x, long a, long b)
 
 void set_micro_steps_per_step(tmc2209_stepper_driver_t *stepper_driver, uint16_t microsteps_per_step)
 {
-  uint16_t microsteps_per_step_shifted = constrain(microsteps_per_step, MICROSTEPS_PER_STEP_MIN, MICROSTEPS_PER_STEP_MAX);
-  microsteps_per_step_shifted          = microsteps_per_step >> 1;
+  uint16_t microsteps_per_step_constrained = constrain(microsteps_per_step, MICROSTEPS_PER_STEP_MIN, MICROSTEPS_PER_STEP_MAX);
+  uint16_t microsteps_per_step_shifted     = microsteps_per_step_constrained >> 1;
   uint16_t exponent                    = 0;
   while (microsteps_per_step_shifted > 0)
   {
