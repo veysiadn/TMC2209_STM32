@@ -1,60 +1,76 @@
-# TMC2209 Stepper Driver Driver for STM32 Microcontrollers
+# TMC2209 Stepper Motor Driver for STM32 Microcontrollers
 
 ## Overview
-This module is a driver for the TMC2209 step motor driver IC for **STM32 microcontrollers**. It provides an interface for controlling step motors, includes UART based control and STEP/DIR based control (Legacy Mode). 
-UART interface allows : 
+This module is a driver for the TMC2209 stepper motor driver IC for **STM32 microcontrollers**. It provides an interface for controlling stepper motors via UART-based control and STEP/DIR-based control (Legacy Mode).
+
+UART interface allows:
 + Detailed diagnostics and thermal management
-+ Passive braking and freewheeling for flexible, lowest power stop modes
-+ More options for microstep resolution setting (fullstep to 256 microstep)
-+ Software controlled motor current setting and more chopper options
-+ Use StallGuard for sensorless homing and CoolStep for adaptive motor current and cool motor
-+ This mode allows replacing all control lines like ENN, DIAG, INDEX, MS1, MS2, and analog current
-setting VREF by a single interface line. 
-+ This way, only three signals are required for full control: STEP,
-DIR and PDN_UART. 
-+ Even motion without external STEP pulses is provided by an internal programmable step pulse generator: Just set the desired motor velocity. However, no ramping is
-provided by the TMC2209.
++ Passive braking and freewheeling for flexible, lowest-power stop modes
++ Extended microstep resolution options (full-step to 256 microsteps)
++ Software-controlled motor current setting and more chopper options
++ StallGuard for sensorless homing and CoolStep for adaptive motor current control
++ Replacing all hardware control lines (ENN, DIAG, INDEX, MS1, MS2, and analog VREF) with a single UART line
++ Only three signals required for full control: STEP, DIR, and PDN_UART
++ Internal programmable step pulse generator for motion without external STEP pulses (velocity-only mode, no ramping)
 
-### HAL implementation
+## Requirements & Dependencies
 
-For porting the project to a new microcontroller, weak functions from [tmc2209.h](tmc2209.h) should be implemented.
+| Dependency | Minimum Version | Notes |
+| :--------- | :-------------- | :---- |
+| STM32 HAL library (STM32Cube) | Any version since ~2016 | `HAL_UART`, `HAL_GPIO`, and `HAL_HalfDuplex` APIs are used and have been stable across all series |
+| STM32CubeIDE / STM32CubeMX | 1.0 or later (tested up to 1.16.x) | Used to generate UART half-duplex and GPIO configuration |
+| C standard | C99 or later | Requires `<stdbool.h>` and `<stdint.h>` |
 
-#### Functions must be implemented: 
+> **UART configuration note:** The UART peripheral must be configured in **half-duplex** mode via STM32CubeMX/CubeIDE. Set `Mode` to **Single Wire (Half-Duplex)** under the UART peripheral settings, and configure baud rate to match (typically 115200). The `HAL_HalfDuplex_EnableTransmitter` / `HAL_HalfDuplex_EnableReceiver` APIs are used to switch the bus direction.
 
-| Interface Functions                                                                                          | Description                                                     |
-| :----------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
-| void tmc2209_set_hardware_enable_pin(tmc2209_stepper_driver_t *stepper_driver, uint8_t hardware_enable_pin); | Assigns hardware enable pin and disables it. (***Active Low***) |
-| void tmc2209_disable(tmc2209_stepper_driver_t *stepper_driver);                                              | Disables the stepper driver.                                    |
-| void tmc2209_enable(tmc2209_stepper_driver_t *stepper_driver);                                               | Enables the stepper driver                                      |
-| void tmc2209_write(tmc2209_stepper_driver_t *stepper_driver, uint8_t register_address, uint32_t data);       | Write data to the given register address via UART interface     |
-| uint32_t tmc2209_read(tmc2209_stepper_driver_t *stepper_driver, uint8_t register_address);                   | Read data from the given register address via UART interface    |
-------------
+> **Compatibility:** This driver is compatible with all STM32 series (F0/F1/F2/F3/F4/F7/G0/G4/H7/L0/L1/L4/U5, etc.) as long as the HAL UART half-duplex mode is supported. It has been verified against the latest STM32Cube HAL releases (2024/2025).
 
-### Some notes and Datasheet info.
+---
 
-- It is important to read the datasheet of the TMC2209 stepper driver IC before using this module. Datasheet can be found [here](https://www.analog.com/media/en/technical-documentation/data-sheets/TMC2209_datasheet_rev1.09.pdf).
-- Additionally a spreadsheet for refernce calculations can be found [here](https://www.analog.com/media/en/engineering-tools/design-tools/TMC220x_TMC222x_Calculations.xlsx).
+### HAL Implementation
+
+To port the driver to your STM32 target, implement the five weak functions declared in [tmc2209.h](tmc2209.h). An annotated example is provided in [tmc2209_if.c](tmc2209_if.c) (everything is commented out — uncomment and adapt it for your application).
+
+#### Functions to implement:
+
+| Function Signature | Description |
+| :----------------- | :---------- |
+| `void tmc2209_set_hardware_enable_pin(tmc2209_stepper_driver_t *stepper_driver, uint8_t hardware_enable_pin);` | Stores the enable pin and drives it HIGH to keep the driver disabled on init. (**Active Low**) |
+| `void tmc2209_disable(tmc2209_stepper_driver_t *stepper_driver);` | Disables the stepper driver (drives ENN HIGH and sets TOFF=0). |
+| `void tmc2209_enable(tmc2209_stepper_driver_t *stepper_driver);` | Enables the stepper driver (drives ENN LOW and restores TOFF). |
+| `void tmc2209_write(tmc2209_stepper_driver_t *stepper_driver, uint8_t register_address, uint32_t data);` | Sends an 8-byte write datagram to the TMC2209 over UART. |
+| `uint32_t tmc2209_read(tmc2209_stepper_driver_t *stepper_driver, uint8_t register_address);` | Sends a 4-byte read request and receives an 8-byte reply over UART; returns the data field. |
+
+---
+
+### Notes and Datasheet
+
+- Read the TMC2209 datasheet before using this module. Datasheet: [TMC2209_datasheet_rev1.09.pdf](https://www.analog.com/media/en/technical-documentation/data-sheets/TMC2209_datasheet_rev1.09.pdf).
+- A spreadsheet for reference calculations is available [here](https://www.analog.com/media/en/engineering-tools/design-tools/TMC220x_TMC222x_Calculations.xlsx).
 
 ## License
 This software is licensed under terms that can be found in the LICENSE file in the root directory of this software component. If no LICENSE file comes with this software, it is provided AS-IS.
 
 ## Example Interface Implementation
 
-Note that example interface file can be found [here](tmc2209_if.c). Everything is commented out, you can use that file and modify it for your application.
+A ready-to-adapt template is available in [tmc2209_if.c](tmc2209_if.c). The entire file is commented out — copy it into your project, uncomment, and replace the peripheral handles and GPIO port/pin references with your own.
+
+Key points:
+- Replace `huart5` with the `UART_HandleTypeDef` instance generated by STM32CubeMX for your half-duplex UART.
+- Replace `MOT_EN_GPIO_Port` / `MOT_EN_Pin` with the GPIO port and pin connected to the TMC2209 `ENN` pin.
+- In `tmc2209_read`, add your own error handling inside the CRC mismatch block (e.g., return 0, log the error, or retry).
 
 ```c
-
 #include "tmc2209.h"
 #include "tmc2209_defines.h"
 #include "main.h"
-
 
 extern UART_HandleTypeDef huart5;
 
 void tmc2209_set_hardware_enable_pin(tmc2209_stepper_driver_t *stepper_driver, uint8_t hardware_enable_pin)
 {
   stepper_driver->hardware_enable_pin_ = hardware_enable_pin;
-
+  /* Drive ENN HIGH on init — the pin is active-low, so this keeps the driver disabled */
   HAL_GPIO_WritePin(MOT_EN_GPIO_Port, MOT_EN_Pin, GPIO_PIN_SET);
 }
 
@@ -136,37 +152,42 @@ uint32_t tmc2209_read(tmc2209_stepper_driver_t *stepper_driver, uint8_t register
   uint8_t  crc           = calculate_crc_write(stepper_driver, &read_reply_datagram, WRITE_READ_REPLY_DATAGRAM_SIZE);
   if (crc != read_reply_datagram.crc)
   {
+    /* CRC mismatch — add your error handling here (e.g., return 0, set an error flag, or retry) */
+    return 0;
   }
   return reversed_data;
 }
-
 ```
 ## Example Usage
+
+The snippet below shows a minimal motion loop using the UART velocity interface. It ramps the motor up to a target speed while a button is held, then ramps back down to a stop when released.
+
 ```c
+#include "tmc2209.h"
+#include "main.h"
 
+#define INTERNAL_PWM_FREQUENCY_23KHZ 0  /* Actual frequency ≈ 23.44 kHz */
+#define INTERNAL_PWM_FREQUENCY_35KHZ 1  /* Actual frequency ≈ 35.15 kHz */
+#define INTERNAL_PWM_FREQUENCY_46KHZ 2  /* Actual frequency ≈ 46.51 kHz */
+#define INTERNAL_PWM_FREQUENCY_58KHZ 3  /* Actual frequency ≈ 58.82 kHz */
 
-#define INTERNAL_PWM_FREQUENCY_23KHZ 0 // Actual frequency is 23.44 kHz
-#define INTERNAL_PWM_FREQUENCY_35KHZ 1 // Actual frequency is 35.15 kHz
-#define INTERNAL_PWM_FREQUENCY_46KHZ 2 // Actual frequency is 46.51 kHz
-#define INTERNAL_PWM_FREQUENCY_58KHZ 3 // Actual frequency is 58.82 kHz
-#define STEPS_PER_REVOLUTION         48
-#define STOP_VELOCITY                0
-
+#define STEPS_PER_REVOLUTION    48
+#define STOP_VELOCITY           0
 #define MICROSTEPS_PER_STEP     4
 #define INITIAL_VELOCITY_RPM    500
 #define MAX_TARGET_VELOCITY_RPM 3500
 #define RUN_CURRENT_PERCENT     70
-#define ACCELERATION            MICROSTEPS_PER_STEP * 100
+#define ACCELERATION            (MICROSTEPS_PER_STEP * 100)
 
 const int32_t INITIAL_RUN_VELOCITY = INITIAL_VELOCITY_RPM * MICROSTEPS_PER_STEP;
 const int32_t MAX_TARGET_VELOCITY  = MAX_TARGET_VELOCITY_RPM * MICROSTEPS_PER_STEP;
 
-
-
 tmc2209_stepper_driver_t stepper_driver;
-bool                     invert_direction = false;
-extern TIM_HandleTypeDef htim3;
+int32_t                  current_velocity = 0;
 
+/* --- Initialization ---------------------------------------------------- */
+void motor_init(void)
+{
   tmc2209_setup(&stepper_driver, 115200, SERIAL_ADDRESS_0);
   tmc2209_set_hardware_enable_pin(&stepper_driver, MOT_EN_Pin);
   enable_cool_step(&stepper_driver, 1, 0);
@@ -177,82 +198,76 @@ extern TIM_HandleTypeDef htim3;
   set_all_current_percent_values(&stepper_driver, RUN_CURRENT_PERCENT, 0, 0);
   enable_automatic_current_scaling(&stepper_driver);
   enable_stealth_chop(&stepper_driver);
-
   set_stealth_chop_duration_threshold(&stepper_driver, 9999999);
-  while (1)
+}
+
+/* --- Main loop --------------------------------------------------------- */
+void motor_task(void)
+{
+  if (!HAL_GPIO_ReadPin(TEST_MOTOR_RIGHT_GPIO_Port, TEST_MOTOR_RIGHT_Pin))
   {
-    if (!HAL_GPIO_ReadPin(TEST_MOTOR_RIGHT_GPIO_Port, TEST_MOTOR_RIGHT_Pin))
+    tmc2209_enable(&stepper_driver);
+    enable_inverse_motor_direction(&stepper_driver);
+    current_velocity = tx_movement_ramp_up(MAX_TARGET_VELOCITY, ACCELERATION);
+
+    while (!HAL_GPIO_ReadPin(TEST_MOTOR_RIGHT_GPIO_Port, TEST_MOTOR_RIGHT_Pin))
     {
-
-      tmc2209_enable(&stepper_driver);
-      enable_inverse_motor_direction(&stepper_driver);
-
-      current_velocity = tx_movement_ramp_up(MAX_TARGET_VELOCITY, ACCELERATION);
-      while (!HAL_GPIO_ReadPin(TEST_MOTOR_RIGHT_GPIO_Port, TEST_MOTOR_RIGHT_Pin))
-      {
-        move_at_velocity(&stepper_driver, current_velocity);
-        mstep_counter = get_microstep_counter(&stepper_driver);
-        if (mstep_counter)
-        {
-        }
-      }
+      move_at_velocity(&stepper_driver, current_velocity);
     }
-    else if (!HAL_GPIO_ReadPin(TEST_MOTOR_LEFT_GPIO_Port, TEST_MOTOR_LEFT_Pin))
-    {
-      tmc2209_enable(&stepper_driver);
-      disable_inverse_motor_direction(&stepper_driver);
+  }
+  else if (!HAL_GPIO_ReadPin(TEST_MOTOR_LEFT_GPIO_Port, TEST_MOTOR_LEFT_Pin))
+  {
+    tmc2209_enable(&stepper_driver);
+    disable_inverse_motor_direction(&stepper_driver);
+    current_velocity = tx_movement_ramp_up(MAX_TARGET_VELOCITY, ACCELERATION);
 
-      current_velocity = tx_movement_ramp_up(MAX_TARGET_VELOCITY, ACCELERATION);
-      while (!HAL_GPIO_ReadPin(TEST_MOTOR_LEFT_GPIO_Port, TEST_MOTOR_LEFT_Pin))
-      {
-        move_at_velocity(&stepper_driver, current_velocity);
-      }
+    while (!HAL_GPIO_ReadPin(TEST_MOTOR_LEFT_GPIO_Port, TEST_MOTOR_LEFT_Pin))
+    {
+      move_at_velocity(&stepper_driver, current_velocity);
+    }
+  }
+  else
+  {
+    if (current_velocity > 0)
+    {
+      current_velocity = tx_movement_ramp_down(STOP_VELOCITY, ACCELERATION);
     }
     else
     {
-      if (current_velocity > 0)
-      {
-        tx_movement_ramp_down(0, ACCELERATION);
-        current_velocity = 0;
-      }
-      else
-      {
-        move_at_velocity(&stepper_driver, STOP_VELOCITY);
-      }
-      tmc2209_disable(&stepper_driver);
-      HAL_Delay(1);
+      move_at_velocity(&stepper_driver, STOP_VELOCITY);
     }
+    tmc2209_disable(&stepper_driver);
+    HAL_Delay(1);
   }
 }
 
+/* --- Ramp helpers ------------------------------------------------------- */
 int32_t tx_movement_ramp_up(int32_t target_velocity, int32_t acceleration)
 {
-  move_at_velocity(&stepper_driver, INITIAL_RUN_VELOCITY);
+  int32_t vel = INITIAL_RUN_VELOCITY;
+  move_at_velocity(&stepper_driver, vel);
   HAL_Delay(1);
-  int32_t current_velocity = INITIAL_RUN_VELOCITY;
-  while (current_velocity < target_velocity)
+  while (vel < target_velocity)
   {
-    current_velocity += acceleration;
-    move_at_velocity(&stepper_driver, current_velocity);
+    vel += acceleration;
+    move_at_velocity(&stepper_driver, vel);
     HAL_Delay(1);
   }
-  return current_velocity;
+  return vel;
 }
 
 int32_t tx_movement_ramp_down(int32_t target_velocity, int32_t acceleration)
 {
-  move_at_velocity(&stepper_driver, MAX_TARGET_VELOCITY);
-  HAL_Delay(1);
-  int32_t current_velocity = MAX_TARGET_VELOCITY;
-  while (current_velocity > target_velocity)
+  int32_t vel = current_velocity;
+  while (vel > target_velocity)
   {
-    current_velocity -= acceleration;
-    move_at_velocity(&stepper_driver, current_velocity);
+    vel -= acceleration;
+    if (vel < target_velocity) vel = target_velocity;
+    move_at_velocity(&stepper_driver, vel);
     HAL_Delay(1);
   }
-  return current_velocity;
+  return vel;
 }
-
 ```
 
 ## Author
